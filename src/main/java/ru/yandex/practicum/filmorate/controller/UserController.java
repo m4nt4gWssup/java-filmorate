@@ -31,8 +31,8 @@ public class UserController {
 
     @PostMapping(value = "/users")
     public User create(@RequestBody User user) {
-        log.info("Получен POST-запрос /user, чтобы добавить пользователя с ID={}", newId + 1);
-        if (isValidFilm(user)) {
+        log.info("Получен POST-запрос /users, чтобы добавить пользователя с ID={}", user.getId());
+        if (isValidUser(user)) {
             user.setId(++newId);
             users.put(user.getId(), user);
         }
@@ -41,25 +41,24 @@ public class UserController {
 
     @PutMapping(value = "/users")
     public User update(@RequestBody User user) {
-        log.info("Получен PUT-запрос /user, чтобы обновить пользователя с ID={}", user.getId());
-        if (user.getId() == null) {
-            user.setId(newId + 1);
+        log.info("Получен PUT-запрос /users, чтобы обновить пользователя с ID={}", user.getId());
+        if (!users.containsKey(user.getId())) {
+            throw new ValidationException("Такого id не существует");
         }
-        if (isValidFilm(user)) {
+        if (users.containsValue(user) || isValidUser(user)) {
             users.put(user.getId(), user);
-            newId++;
         }
         return user;
     }
 
-    private boolean isValidFilm(User user) {
+    private boolean isValidUser(User user) {
         if (user.getEmail().isEmpty() || !user.getEmail().contains("@")) {
             throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
         }
         if ((user.getLogin().isEmpty()) || (user.getLogin().contains(" "))) {
             throw new ValidationException("Логин не может быть пустым и содержать пробелы");
         }
-        if (user.getName().isEmpty()) {
+        if (user.getName() == null || user.getName().isBlank() || user.getName().isEmpty()) {
             user.setName(user.getLogin());
         }
         if (user.getBirthday().isAfter(LocalDate.now())) {

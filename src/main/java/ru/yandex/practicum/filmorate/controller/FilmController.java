@@ -31,7 +31,7 @@ public class FilmController {
 
     @PostMapping(value = "/films")
     public Film create(@RequestBody Film film) {
-        log.info("Получен POST-запрос /film, чтобы добавить фильм с ID={}", newId + 1);
+        log.info("Получен POST-запрос /films, чтобы добавить фильм с ID={}", film.getId());
         if (isValidFilm(film)) {
             film.setId(++newId);
             films.put(film.getId(), film);
@@ -41,13 +41,12 @@ public class FilmController {
 
     @PutMapping(value = "/films")
     public Film update(@RequestBody Film film) {
-        log.info("Получен PUT-запрос /film, чтобы обновить фильм с ID={}", film.getId());
-        if (film.getId() == null) {
-            film.setId(newId + 1);
+        log.info("Получен PUT-запрос /films, чтобы обновить фильм с ID={}", film.getId());
+        if (!films.containsKey(film.getId())) {
+            throw new ValidationException("Такого id не существует");
         }
-        if (isValidFilm(film)) {
+        if (films.containsValue(film) || isValidFilm(film)) {
             films.put(film.getId(), film);
-            newId++;
         }
         return film;
     }
