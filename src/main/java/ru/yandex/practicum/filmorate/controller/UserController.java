@@ -31,7 +31,7 @@ public class UserController {
 
     @PostMapping(value = "/users")
     public User create(@RequestBody User user) {
-        log.info("Получен POST-запрос /users, чтобы добавить пользователя с ID={}", user.getId());
+        log.info("Получен POST-запрос /users, чтобы добавить пользователя с ID={}", newId + 1);
         if (isValidUser(user)) {
             user.setId(++newId);
             users.put(user.getId(), user);
@@ -52,16 +52,16 @@ public class UserController {
     }
 
     private boolean isValidUser(User user) {
-        if (user.getEmail().isEmpty() || !user.getEmail().contains("@")) {
+        if (user.getEmail() == null || user.getEmail().isEmpty() || !user.getEmail().contains("@")) {
             throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
         }
-        if ((user.getLogin().isEmpty()) || (user.getLogin().contains(" "))) {
+        if (user.getLogin() == null || user.getLogin().matches("\\s+")) {
             throw new ValidationException("Логин не может быть пустым и содержать пробелы");
         }
-        if (user.getName() == null || user.getName().isBlank() || user.getName().isEmpty()) {
+        if (user.getName() == null || user.getName().isEmpty()) {
             user.setName(user.getLogin());
         }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
+        if (user.getBirthday() == null || user.getBirthday().isAfter(LocalDate.now())) {
             throw new ValidationException("Дата рождения не может быть в будущем.");
         }
         return true;

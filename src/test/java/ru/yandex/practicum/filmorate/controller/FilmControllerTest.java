@@ -20,7 +20,7 @@ class FilmControllerTest {
         film = new Film();
         film.setName("Джентельмены удачи");
         film.setDescription("Классный фильм");
-        film.setDuration(135);
+        film.setDuration(135L);
         film.setReleaseDate(LocalDate.of(1999, 9, 9));
     }
 
@@ -60,7 +60,7 @@ class FilmControllerTest {
 
     @Test
     public void shouldAddFilmFailedDuration() {
-        film.setDuration(-10);
+        film.setDuration(-10L);
         assertThrows(ValidationException.class, () -> filmController.create(film));
         assertEquals(0, filmController.findAll().size(), "В списке не должно быть фильмов");
     }
