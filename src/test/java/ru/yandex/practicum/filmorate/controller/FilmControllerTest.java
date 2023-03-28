@@ -4,6 +4,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 
@@ -16,11 +21,14 @@ class FilmControllerTest {
 
     @BeforeEach
     public void beforeEach() {
-        filmController = new FilmController();
+        FilmStorage filmStorage = new InMemoryFilmStorage();
+        UserStorage userStorage = new InMemoryUserStorage();
+        FilmService filmService = new FilmService(filmStorage, userStorage);
+        filmController = new FilmController(filmStorage, filmService);
         film = new Film();
         film.setName("Джентельмены удачи");
         film.setDescription("Классный фильм");
-        film.setDuration(135L);
+        film.setDuration(135);
         film.setReleaseDate(LocalDate.of(1999, 9, 9));
     }
 
@@ -60,7 +68,7 @@ class FilmControllerTest {
 
     @Test
     public void shouldAddFilmFailedDuration() {
-        film.setDuration(-10L);
+        film.setDuration(-10);
         assertThrows(ValidationException.class, () -> filmController.create(film));
         assertEquals(0, filmController.findAll().size(), "В списке не должно быть фильмов");
     }
