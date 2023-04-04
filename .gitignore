@@ -34,3 +34,6 @@ build/
 *.class
 *.jar
 .DS_Store
+/target/
+/node_modules/
+/.idea/
