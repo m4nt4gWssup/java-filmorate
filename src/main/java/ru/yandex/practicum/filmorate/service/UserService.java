@@ -20,6 +20,26 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
+    public List<User> getAllUsers() {
+        return userStorage.getAllUsers();
+    }
+
+    public User createUser(User user) {
+        return userStorage.createUser(user);
+    }
+
+    public User getById(Integer id) {
+        return userStorage.getById(id);
+    }
+
+    public User updateUser(User user) {
+        return userStorage.updateUser(user);
+    }
+
+    public User deleteUser(Integer id) {
+        return userStorage.deleteUser(id);
+    }
+
     public void addFriend(Integer userId, Integer friendId) {
         User user = userStorage.getById(userId);
         User friend = userStorage.getById(friendId);

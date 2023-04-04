@@ -24,7 +24,7 @@ class FilmControllerTest {
         FilmStorage filmStorage = new InMemoryFilmStorage();
         UserStorage userStorage = new InMemoryUserStorage();
         FilmService filmService = new FilmService(filmStorage, userStorage);
-        filmController = new FilmController(filmStorage, filmService);
+        filmController = new FilmController(filmService);
         film = new Film();
         film.setName("Джентельмены удачи");
         film.setDescription("Классный фильм");
