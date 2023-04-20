@@ -1,69 +1,71 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @Slf4j
 public class FilmController {
 
-    private final Map<Integer, Film> films;
-    private Integer newId;
+    private final FilmService filmService;
 
-    public FilmController() {
-        newId = 0;
-        films = new HashMap<>();
+    @Autowired
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
     }
 
     @GetMapping("/films")
     public List<Film> findAll() {
         log.info("Получен GET-запрос /films для вывода списка всех фильмов");
-        return new ArrayList<>(films.values());
+        return filmService.getAllFilms();
+    }
+
+    @GetMapping("/films/{id}")
+    public Film getFilmById(@PathVariable Integer id) {
+        log.info("Получен GET-запрос /films для вывода фильма с Id = {}", id);
+        return filmService.getById(id);
+    }
+
+    @GetMapping("/films/popular")
+    public List<Film> getPopular(@RequestParam(defaultValue = "10") Integer count) {
+        log.info("Получен GET-запрос /films/popular для вывода популярных фильмов");
+        return filmService.getPopular(count);
     }
 
     @PostMapping(value = "/films")
     public Film create(@RequestBody Film film) {
-        log.info("Получен POST-запрос /films, чтобы добавить фильм с ID={}", newId + 1);
-        if (isValidFilm(film)) {
-            film.setId(++newId);
-            films.put(film.getId(), film);
-        }
-        return film;
+        log.info("Получен POST-запрос /films, чтобы добавить фильм");
+        return filmService.createFilm(film);
     }
 
     @PutMapping(value = "/films")
     public Film update(@RequestBody Film film) {
         log.info("Получен PUT-запрос /films, чтобы обновить фильм с ID={}", film.getId());
-        if (!films.containsKey(film.getId())) {
-            throw new ValidationException("Такого id не существует");
-        }
-        if (films.containsValue(film) || isValidFilm(film)) {
-            films.put(film.getId(), film);
-        }
-        return film;
+        return filmService.updateFilm(film);
     }
 
-    private boolean isValidFilm(Film film) {
-        if (film.getName() == null || film.getName().isBlank()) {
-            throw new ValidationException("Название не может быть пустым");
-        }
-        if (film.getDescription() == null || (film.getDescription().length()) > 200) {
-            throw new ValidationException("Максимальная длина описания — 200 символов");
-        }
-        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            throw new ValidationException("Дата релиза не должна быть раньше 28 декабря 1895 года");
-        }
-        if (film.getDuration() == null || film.getDuration() <= 0) {
-            throw new ValidationException("Продолжительность фильма должна быть положительной");
-        }
-        return true;
+    @PutMapping("/films/{id}/like/{userId}")
+    public void addLike(@PathVariable Integer id, @PathVariable Integer userId) {
+        log.info("Получен PUT-запрос /films/{id}/like, чтобы поставить лайк от пользователей с ID={} и UserID={}",
+                id, userId);
+        filmService.addLike(id, userId);
+    }
+
+    @DeleteMapping("/films/{id}")
+    public Film delete(@PathVariable Integer id) {
+        log.info("Получен DELETE-запрос /films, чтобы удалить фильм с ID={}", id);
+        return filmService.deleteFilm(id);
+    }
+
+    @DeleteMapping("/films/{id}/like/{userId}")
+    public void deleteLike(@PathVariable Integer id, @PathVariable Integer userId) {
+        log.info("Получен PUT-запрос /films/{id}/like, чтобы удалить лайк от пользователей с ID={} и UserID={}",
+                id, userId);
+        filmService.deleteLike(id, userId);
     }
 }
