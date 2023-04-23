@@ -1,11 +1,11 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.FilmNotFoundIdException;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -17,22 +17,12 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Component("filmDbStorage")
+@Component
+@AllArgsConstructor
 public class FilmDbStorage implements FilmStorage {
-
     private final JdbcTemplate jdbcTemplate;
-    private MpaService mpaService;
-    private GenreService genreService;
-    private LikeStorage likeStorage;
-
-    @Autowired
-    public FilmDbStorage(JdbcTemplate jdbcTemplate, MpaService mpaService, GenreService genreService,
-                         LikeStorage likeStorage) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.mpaService = mpaService;
-        this.genreService = genreService;
-        this.likeStorage = likeStorage;
-    }
+    private final MpaService mpaService;
+    private final GenreService genreService;
 
     @Override
     public Film createFilm(Film film) {
@@ -80,7 +70,7 @@ public class FilmDbStorage implements FilmStorage {
             genreService.putGenres(film);
             return film;
         } else {
-            throw new FilmNotFoundIdException("Фильм с ID=" + film.getId() + " не найден");
+            throw new EntityNotFoundException("Фильм с ID=" + film.getId() + " не найден");
         }
     }
 
@@ -92,7 +82,7 @@ public class FilmDbStorage implements FilmStorage {
         Film film = getById(id);
         String sqlQuery = "DELETE FROM films WHERE id = ? ";
         if (jdbcTemplate.update(sqlQuery, id) == 0) {
-            throw new FilmNotFoundIdException("Фильм с ID=" + id + " не найден");
+            throw new EntityNotFoundException("Фильм с ID=" + id + " не найден");
         }
         return film;
     }
@@ -111,13 +101,12 @@ public class FilmDbStorage implements FilmStorage {
                     filmRows.getInt("id"),
                     filmRows.getString("name"),
                     filmRows.getString("description"),
-                    filmRows.getDate("release_date").toLocalDate(),
+                    Objects.requireNonNull(filmRows.getDate("release_date")).toLocalDate(),
                     filmRows.getInt("duration"),
-                    new HashSet<>(likeStorage.getLikes(filmRows.getInt("id"))),
                     mpa,
                     genres);
         } else {
-            throw new FilmNotFoundIdException("Фильм с ID=" + id + " не найден");
+            throw new EntityNotFoundException("Фильм с ID=" + id + " не найден");
         }
         return film;
     }
@@ -131,7 +120,6 @@ public class FilmDbStorage implements FilmStorage {
                 rs.getString("description"),
                 rs.getDate("release_Date").toLocalDate(),
                 rs.getInt("duration"),
-                new HashSet<>(likeStorage.getLikes(rs.getInt("id"))),
                 mpaService.getMpaById(rs.getInt("rating_id")),
                 genreService.getFilmGenres(rs.getInt("id")))
         );

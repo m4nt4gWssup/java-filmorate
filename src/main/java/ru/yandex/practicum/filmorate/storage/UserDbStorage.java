@@ -1,27 +1,24 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.UserNotFoundIdException;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
-@Component("userDbStorage")
+@Component
+@AllArgsConstructor
 public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    public UserDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public User createUser(User user) {
@@ -53,7 +50,7 @@ public class UserDbStorage implements UserStorage {
             log.info("Пользователь с ID={} успешно обновлен", user.getId());
             return user;
         } else {
-            throw new UserNotFoundIdException("Пользователь с ID=" + user.getId() + " не найден");
+            throw new EntityNotFoundException("Пользователь с ID=" + user.getId() + " не найден");
         }
     }
 
@@ -65,7 +62,7 @@ public class UserDbStorage implements UserStorage {
         User user = getById(id);
         String sqlQuery = "DELETE FROM users WHERE id = ? ";
         if (jdbcTemplate.update(sqlQuery, id) == 0) {
-            throw new UserNotFoundIdException("Пользователь с ID=" + id + " не найден");
+            throw new EntityNotFoundException("Пользователь с ID=" + id + " не найден");
         }
         return user;
     }
@@ -83,10 +80,9 @@ public class UserDbStorage implements UserStorage {
                     userRows.getString("email"),
                     userRows.getString("login"),
                     userRows.getString("name"),
-                    userRows.getDate("birthday").toLocalDate(),
-                    null);
+                    Objects.requireNonNull(userRows.getDate("birthday")).toLocalDate());
         } else {
-            throw new UserNotFoundIdException("Пользователь с ID=" + id + " не найден");
+            throw new EntityNotFoundException("Пользователь с ID=" + id + " не найден");
         }
         return user;
     }
@@ -99,8 +95,7 @@ public class UserDbStorage implements UserStorage {
                 rs.getString("email"),
                 rs.getString("login"),
                 rs.getString("name"),
-                rs.getDate("birthday").toLocalDate(),
-                null)
+                rs.getDate("birthday").toLocalDate())
         );
     }
 

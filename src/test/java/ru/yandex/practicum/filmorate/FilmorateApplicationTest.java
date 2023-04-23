@@ -7,13 +7,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.yandex.practicum.filmorate.exception.FilmNotFoundIdException;
-import ru.yandex.practicum.filmorate.exception.UserNotFoundIdException;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.FriendService;
+import ru.yandex.practicum.filmorate.service.LikeService;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.UserDbStorage;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -36,6 +37,8 @@ class FilmorateApplicationTest {
     private final FilmDbStorage filmStorage;
     private final FilmService filmService;
     private final UserService userService;
+    private final LikeService likeService;
+    private final FriendService friendService;
     private User firstUser;
     private User secondUser;
     private User thirdUser;
@@ -73,7 +76,6 @@ class FilmorateApplicationTest {
                 .duration(111)
                 .build();
         firstFilm.setMpa(new Mpa(1, "G"));
-        firstFilm.setLikes(new HashSet<>());
         firstFilm.setGenres(new HashSet<>(Arrays.asList(new Genre(2, "Драма"),
                 new Genre(1, "Комедия"))));
 
@@ -83,8 +85,7 @@ class FilmorateApplicationTest {
                 .releaseDate(LocalDate.of(2000, 2, 10))
                 .duration(100)
                 .build();
-        secondFilm.setMpa(new Mpa(3, "PG-13"));
-        secondFilm.setLikes(new HashSet<>());
+        secondFilm.setMpa(new Mpa(3, "PG-13"));;
         secondFilm.setGenres(new HashSet<>(Arrays.asList(new Genre(6, "Боевик"))));
 
         thirdFilm = Film.builder()
@@ -94,7 +95,6 @@ class FilmorateApplicationTest {
                 .duration(105)
                 .build();
         thirdFilm.setMpa(new Mpa(4, "R"));
-        thirdFilm.setLikes(new HashSet<>());
         thirdFilm.setGenres(new HashSet<>(Arrays.asList(new Genre(2, "Драма"))));
     }
 
@@ -139,7 +139,7 @@ class FilmorateApplicationTest {
     public void shoulddeleteUser() {
         firstUser = userStorage.createUser(firstUser);
         userStorage.deleteUser(firstUser.getId());
-        assertThrows(UserNotFoundIdException.class, () -> userStorage.getById(firstUser.getId()));
+        assertThrows(EntityNotFoundException.class, () -> userStorage.getById(firstUser.getId()));
     }
 
     @Test
@@ -188,17 +188,16 @@ class FilmorateApplicationTest {
     public void shoulddeleteFilm() {
         firstFilm = filmStorage.createFilm(firstFilm);
         filmStorage.deleteFilm(firstFilm.getId());
-        assertThrows(FilmNotFoundIdException.class, () -> filmStorage.getById(firstFilm.getId()));
+        assertThrows(EntityNotFoundException.class, () -> filmStorage.getById(firstFilm.getId()));
     }
 
     @Test
     public void shouldAddLike() {
         firstUser = userStorage.createUser(firstUser);
         firstFilm = filmStorage.createFilm(firstFilm);
-        filmService.addLike(firstFilm.getId(), firstUser.getId());
+        likeService.addLike(firstFilm.getId(), firstUser.getId());
         firstFilm = filmStorage.getById(firstFilm.getId());
-        assertThat(firstFilm.getLikes()).hasSize(1);
-        assertThat(firstFilm.getLikes()).contains(firstUser.getId());
+        assertEquals(1, likeService.getLikes(firstFilm.getId()).size());
     }
 
     @Test
@@ -206,12 +205,11 @@ class FilmorateApplicationTest {
         firstUser = userStorage.createUser(firstUser);
         secondUser = userStorage.createUser(secondUser);
         firstFilm = filmStorage.createFilm(firstFilm);
-        filmService.addLike(firstFilm.getId(), firstUser.getId());
-        filmService.addLike(firstFilm.getId(), secondUser.getId());
-        filmService.deleteLike(firstFilm.getId(), firstUser.getId());
+        likeService.addLike(firstFilm.getId(), firstUser.getId());
+        likeService.addLike(firstFilm.getId(), secondUser.getId());
+        likeService.deleteLike(firstFilm.getId(), firstUser.getId());
         firstFilm = filmStorage.getById(firstFilm.getId());
-        assertThat(firstFilm.getLikes()).hasSize(1);
-        assertThat(firstFilm.getLikes()).contains(secondUser.getId());
+        assertEquals(1, likeService.getLikes(firstFilm.getId()).size());
     }
 
     @Test
@@ -222,18 +220,18 @@ class FilmorateApplicationTest {
         thirdUser = userStorage.createUser(thirdUser);
 
         firstFilm = filmStorage.createFilm(firstFilm);
-        filmService.addLike(firstFilm.getId(), firstUser.getId());
+        likeService.addLike(firstFilm.getId(), firstUser.getId());
 
         secondFilm = filmStorage.createFilm(secondFilm);
-        filmService.addLike(secondFilm.getId(), firstUser.getId());
-        filmService.addLike(secondFilm.getId(), secondUser.getId());
-        filmService.addLike(secondFilm.getId(), thirdUser.getId());
+        likeService.addLike(secondFilm.getId(), firstUser.getId());
+        likeService.addLike(secondFilm.getId(), secondUser.getId());
+        likeService.addLike(secondFilm.getId(), thirdUser.getId());
 
         thirdFilm = filmStorage.createFilm(thirdFilm);
-        filmService.addLike(thirdFilm.getId(), firstUser.getId());
-        filmService.addLike(thirdFilm.getId(), secondUser.getId());
+        likeService.addLike(thirdFilm.getId(), firstUser.getId());
+        likeService.addLike(thirdFilm.getId(), secondUser.getId());
 
-        List<Film> listFilms = filmService.getPopular(3);
+        List<Film> listFilms = likeService.getPopular(3);
 
         assertThat(listFilms).hasSize(3);
 
@@ -257,9 +255,9 @@ class FilmorateApplicationTest {
     public void shouldAddFriend() {
         firstUser = userStorage.createUser(firstUser);
         secondUser = userStorage.createUser(secondUser);
-        userService.addFriend(firstUser.getId(), secondUser.getId());
-        assertThat(userService.getFriends(firstUser.getId())).hasSize(1);
-        assertThat(userService.getFriends(firstUser.getId())).contains(secondUser);
+        friendService.addFriend(firstUser.getId(), secondUser.getId());
+        assertThat(friendService.getFriends(firstUser.getId())).hasSize(1);
+        assertThat(friendService.getFriends(firstUser.getId())).contains(secondUser);
     }
 
     @Test
@@ -267,11 +265,11 @@ class FilmorateApplicationTest {
         firstUser = userStorage.createUser(firstUser);
         secondUser = userStorage.createUser(secondUser);
         thirdUser = userStorage.createUser(thirdUser);
-        userService.addFriend(firstUser.getId(), secondUser.getId());
-        userService.addFriend(firstUser.getId(), thirdUser.getId());
-        userService.deleteFriend(firstUser.getId(), secondUser.getId());
-        assertThat(userService.getFriends(firstUser.getId())).hasSize(1);
-        assertThat(userService.getFriends(firstUser.getId())).contains(thirdUser);
+        friendService.addFriend(firstUser.getId(), secondUser.getId());
+        friendService.addFriend(firstUser.getId(), thirdUser.getId());
+        friendService.deleteFriend(firstUser.getId(), secondUser.getId());
+        assertThat(friendService.getFriends(firstUser.getId())).hasSize(1);
+        assertThat(friendService.getFriends(firstUser.getId())).contains(thirdUser);
     }
 
     @Test
@@ -279,10 +277,10 @@ class FilmorateApplicationTest {
         firstUser = userStorage.createUser(firstUser);
         secondUser = userStorage.createUser(secondUser);
         thirdUser = userStorage.createUser(thirdUser);
-        userService.addFriend(firstUser.getId(), secondUser.getId());
-        userService.addFriend(firstUser.getId(), thirdUser.getId());
-        assertThat(userService.getFriends(firstUser.getId())).hasSize(2);
-        assertThat(userService.getFriends(firstUser.getId())).contains(secondUser, thirdUser);
+        friendService.addFriend(firstUser.getId(), secondUser.getId());
+        friendService.addFriend(firstUser.getId(), thirdUser.getId());
+        assertThat(friendService.getFriends(firstUser.getId())).hasSize(2);
+        assertThat(friendService.getFriends(firstUser.getId())).contains(secondUser, thirdUser);
     }
 
     @Test
@@ -290,12 +288,12 @@ class FilmorateApplicationTest {
         firstUser = userStorage.createUser(firstUser);
         secondUser = userStorage.createUser(secondUser);
         thirdUser = userStorage.createUser(thirdUser);
-        userService.addFriend(firstUser.getId(), secondUser.getId());
-        userService.addFriend(firstUser.getId(), thirdUser.getId());
-        userService.addFriend(secondUser.getId(), firstUser.getId());
-        userService.addFriend(secondUser.getId(), thirdUser.getId());
-        assertThat(userService.getCommonFriends(firstUser.getId(), secondUser.getId())).hasSize(1);
-        assertThat(userService.getCommonFriends(firstUser.getId(), secondUser.getId()))
+        friendService.addFriend(firstUser.getId(), secondUser.getId());
+        friendService.addFriend(firstUser.getId(), thirdUser.getId());
+        friendService.addFriend(secondUser.getId(), firstUser.getId());
+        friendService.addFriend(secondUser.getId(), thirdUser.getId());
+        assertThat(friendService.getCommonFriends(firstUser.getId(), secondUser.getId())).hasSize(1);
+        assertThat(friendService.getCommonFriends(firstUser.getId(), secondUser.getId()))
                 .contains(thirdUser);
     }
 }

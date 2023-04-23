@@ -26,10 +26,8 @@ class FilmControllerTest {
         MpaService mpaService = new MpaService(mpaStorage);
         GenreStorage genreStorage = new GenreStorage(jdbcTemplate);
         GenreService genreService= new GenreService(genreStorage);
-        FilmStorage filmStorage = new InMemoryFilmStorage();
-        UserStorage userStorage = new InMemoryUserStorage();
-        LikeStorage likeStorage = new LikeStorage(jdbcTemplate, mpaService, genreService);
-        FilmService filmService = new FilmService(filmStorage, userStorage, likeStorage);
+        FilmStorage filmStorage = new FilmDbStorage(jdbcTemplate, mpaService, genreService);
+        FilmService filmService = new FilmService(filmStorage);
         filmController = new FilmController(filmService);
         film.setName("Джентельмены удачи");
         film.setDescription("Классный фильм");

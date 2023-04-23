@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.User;
@@ -9,43 +8,29 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.util.List;
 
 @Component
+@AllArgsConstructor
 public class FriendStorage {
     private final JdbcTemplate jdbcTemplate;
-    private UserStorage userStorage;
-
-    @Autowired
-    public FriendStorage(JdbcTemplate jdbcTemplate, @Qualifier("userDbStorage") UserStorage userStorage) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.userStorage = userStorage;
-    }
+    private final UserStorage userStorage;
 
     public void addFriend(Integer userId, Integer friendId) {
         User user = userStorage.getById(userId);
         User friend = userStorage.getById(friendId);
-        if ((user != null) && (friend != null)) {
-            boolean status = false;
-            if (friend.getFriends().contains(userId)) {
-                status = true;
-                String sql = "UPDATE friends SET user_id = ? AND friend_id = ? AND status = ? " +
-                        "WHERE user_id = ? AND friend_id = ?";
-                jdbcTemplate.update(sql, friendId, userId, true, friendId, userId);
-            }
+        if ((user != null) && (friend != null) && !isFriend(userId, friendId)) {
             String sql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)";
-            jdbcTemplate.update(sql, userId, friendId, status);
+            jdbcTemplate.update(sql, userId, friendId, false);
         }
     }
 
     public void deleteFriend(Integer userId, Integer friendId) {
         User user = userStorage.getById(userId);
         User friend = userStorage.getById(friendId);
-        if ((user != null) && (friend != null)) {
+        if ((user != null) && (friend != null) && isFriend(userId, friendId)) {
             String sql = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
             jdbcTemplate.update(sql, userId, friendId);
-            if (friend.getFriends().contains(userId)) {
-                sql = "UPDATE friends SET user_id = ? AND friend_id = ? AND status = ? " +
-                        "WHERE user_id = ? AND friend_id = ?";
-                jdbcTemplate.update(sql, friendId, userId, false, friendId, userId);
-            }
+            sql = "UPDATE friends SET user_id = ? AND friend_id = ? AND status = ? " +
+                    "WHERE user_id = ? AND friend_id = ?";
+            jdbcTemplate.update(sql, friendId, userId, false, friendId, userId);
         }
     }
 
@@ -59,12 +44,23 @@ public class FriendStorage {
                             rs.getString("email"),
                             rs.getString("login"),
                             rs.getString("name"),
-                            rs.getDate("birthday").toLocalDate(),
-                            null),
+                            rs.getDate("birthday").toLocalDate()),
                     userId
             );
         } else {
             return null;
         }
+    }
+
+    public boolean isFriend(Integer userId, Integer friendId) {
+        List<User> friends = getFriends(userId);
+        if (friends != null) {
+            for (User friend : friends) {
+                if (friend.getId().equals(friendId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

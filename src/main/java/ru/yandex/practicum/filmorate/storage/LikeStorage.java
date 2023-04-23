@@ -1,27 +1,20 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.GenreService;
 import ru.yandex.practicum.filmorate.service.MpaService;
 
-import java.util.HashSet;
 import java.util.List;
 
 @Component
+@AllArgsConstructor
 public class LikeStorage {
     private final JdbcTemplate jdbcTemplate;
-    private MpaService mpaService;
-    private GenreService genreService;
-
-    @Autowired
-    public LikeStorage(JdbcTemplate jdbcTemplate, MpaService mpaService, GenreService genreService) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.mpaService = mpaService;
-        this.genreService = genreService;
-    }
+    private final MpaService mpaService;
+    private final GenreService genreService;
 
     public void addLike(Integer filmId, Integer userId) {
         String sql = "INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)";
@@ -43,7 +36,6 @@ public class LikeStorage {
                         rs.getString("description"),
                         rs.getDate("release_Date").toLocalDate(),
                         rs.getInt("duration"),
-                        new HashSet<>(getLikes(rs.getInt("id"))),
                         mpaService.getMpaById(rs.getInt("rating_id")),
                         genreService.getFilmGenres(rs.getInt("id"))),
                 count);

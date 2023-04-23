@@ -6,7 +6,6 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.FriendStorage;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
@@ -18,8 +17,8 @@ class UserControllerTest {
     private User user;
     private UserController userController;
     private FriendStorage friendStorage;
-    UserStorage userStorage = new InMemoryUserStorage();
-    UserService userService = new UserService(userStorage, friendStorage);
+    UserStorage userStorage;
+    UserService userService = new UserService(userStorage);
 
     @BeforeEach
     public void beforeEach() {

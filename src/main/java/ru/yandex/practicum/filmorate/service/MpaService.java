@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.MpaStorage;
@@ -10,13 +10,9 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class MpaService {
     private MpaStorage mpaStorage;
-
-    @Autowired
-    public MpaService(MpaStorage mpaStorage) {
-        this.mpaStorage = mpaStorage;
-    }
 
     public Collection<Mpa> getAllMpa() {
         return mpaStorage.getAllMpa().stream()

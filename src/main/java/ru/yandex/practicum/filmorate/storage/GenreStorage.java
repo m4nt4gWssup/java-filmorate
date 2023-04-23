@@ -1,10 +1,10 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.GenreNotFoundIdException;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -12,13 +12,9 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import java.util.List;
 
 @Component
+@AllArgsConstructor
 public class GenreStorage {
     private final JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    public GenreStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     public List<Genre> getGenres() {
         String sql = "SELECT * FROM genres";
@@ -40,7 +36,7 @@ public class GenreStorage {
                     genreRows.getString("name")
             );
         } else {
-            throw new GenreNotFoundIdException("Жанр с ID=" + genreId + " не найден");
+            throw new EntityNotFoundException("Жанр с ID=" + genreId + " не найден");
         }
         return genre;
     }
