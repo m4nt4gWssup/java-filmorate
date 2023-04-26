@@ -6,7 +6,6 @@
 *.ear
 *.zip
 *.tar.gz
-*.DS_Store
 .rar
 hs_err_pid
 out/
