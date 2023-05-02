@@ -6,8 +6,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.error.ErrorResponse;
-import ru.yandex.practicum.filmorate.exception.FilmNotFoundIdException;
-import ru.yandex.practicum.filmorate.exception.UserNotFoundIdException;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 @Slf4j
@@ -16,15 +15,8 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleUserNotFoundIdException(UserNotFoundIdException e) {
-        log.error("UserNotFoundIdException", e);
-        return new ErrorResponse(e.getMessage());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleFilmNotFoundIdException(FilmNotFoundIdException e) {
-        log.error("FilmNotFoundIdException", e);
+    public ErrorResponse handleEntityNotFoundException(EntityNotFoundException e) {
+        log.error("EntityNotFoundException", e);
         return new ErrorResponse(e.getMessage());
     }
 
@@ -33,5 +25,12 @@ public class ErrorHandler {
     public ErrorResponse handleValidationException(ValidationException e) {
         log.error("ValidationException", e);
         return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleInternalServerError(Exception e) {
+        log.error("InternalServerError", e);
+        return new ErrorResponse("Internal server error occurred");
     }
 }
